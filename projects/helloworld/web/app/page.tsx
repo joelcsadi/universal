@@ -1,47 +1,52 @@
-'use server'
+'use client'
+import { useState } from 'react'
 
-interface Message {
-  id: number;
-  greeting: string;
-  username: string;
-  email: string;
-  created_at: string;
-}
+export default function PromptPage() {
+  const [prompt, setPrompt] = useState('')
+  const [result, setResult] = useState('')
 
-async function getMessages() {
-  const res = await fetch('http://127.0.0.1:8000/messages');
-  const data = await res.json();
-  return data.data;
-}
-
-export default async function MessagesPage() {
-  const messages = await getMessages();
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    try {
+      const res = await fetch('http://localhost:8000/prompt', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ prompt })
+      })
+      const data = await res.json()
+      setResult(data.message)
+      setPrompt('')
+    } catch (error) {
+      console.error('Error:', error)
+    }
+  }
 
   return (
-    <div className="container mx-auto p-8">
-      <h1 className="text-3xl font-bold mb-6">Messages</h1>
-      <div className="overflow-x-auto">
-        <table className="min-w-full bg-white border border-gray-300 shadow-sm rounded-lg">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Greeting</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Username</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-200">
-            {messages.map((message: Message) => (
-              <tr key={message.id} className="hover:bg-gray-50">
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{message.id}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{message.greeting}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{message.username}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{message.email}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+    <div className="p-4">
+      <h1 className="text-2xl mb-4">AI Chatbot</h1>
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <input
+          type="text"
+          value={prompt}
+          onChange={(e) => setPrompt(e.target.value)}
+          placeholder="Enter your prompt..."
+          className="w-full p-2 border rounded text-gray-900"
+        />
+        <button 
+          type="submit"
+          className="bg-blue-500 text-white px-4 py-2 rounded"
+        >
+          Submit
+        </button>
+      </form>
+      {result && (
+        <div className="mt-4 p-4 bg-gray-100 rounded">
+          <h2 className="text-sm uppercase tracking-wide text-gray-600 font-semibold mb-2">Response:</h2>
+          <p className="text-gray-900 whitespace-pre-wrap text-lg">{result}</p>
+        </div>
+      )}
     </div>
-  );
+  )
 }
